@@ -2,7 +2,7 @@
 
 This is another RFID library on Arduino with support for 125 KHz tag readers based on Melexis MLX90109 ICs.
 
-![alt text](docs/EVB90109_V3_arduino.jpg "EVB90109_V3 with Arduino board")
+![alt text](extras/EVB90109_V3_arduino.jpg "EVB90109_V3 with Arduino board")
 
 ## Example
 
