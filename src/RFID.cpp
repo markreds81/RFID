@@ -1,13 +1,15 @@
 /************************************************************************************
  * 
- * Name    : RFID.h
+ * Name    : RFID
+ * File    : RFID.cpp
  * Author  : Mark Reds <marco@markreds.it>
  * Date    : September 10, 2020
- * Version : 0.1
- * Notes   : RFID library for Arduino with support for Melexis MLX90109 tag reader ICs.
+ * Version : 1.0.0
+ * Notes   : Arduino library with support for Melexis MLX90109 RFID tag reader ICs.
  * 
- * Copyright (c) 2020 Mark Reds.  All right reserved.
+ * Copyright (C) 2020 Marco Rossi (aka Mark Reds).  All right reserved.
  * 
+ * This file is part of RFID.
  * 
  * RFID is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +22,7 @@
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with RFID.  If not, see <http://www.gnu.org/licenses/>.
+ * along with RFID. If not, see <http://www.gnu.org/licenses/>.
  * 
  ************************************************************************************/
 
