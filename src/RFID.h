@@ -1,6 +1,6 @@
 /************************************************************************************
  * 
- * Name    : RFID
+ * Name    : mrRFID
  * File    : RFID.h
  * Author  : Mark Reds <marco@markreds.it>
  * Date    : September 10, 2020
@@ -9,7 +9,7 @@
  * 
  * Copyright (C) 2020 Marco Rossi (aka Mark Reds).  All right reserved.
  * 
- * This file is part of RFID.
+ * This file is part of mrRFID.
  * 
  * RFID is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

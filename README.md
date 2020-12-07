@@ -1,4 +1,4 @@
-# RFID
+# mrRFID
 
 Arduino library with support for Melexis MLX90109 RFID tag reader ICs.
 
