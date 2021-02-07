@@ -14,19 +14,18 @@ This library supports 125 Khz RFID tag readers based on Melexis MLX90109 ICs.
 #define CLOCK_PIN    13
 #define DATA_PIN     12
 
-RFID rfid(CLOCK_PIN, DATA_PIN);
-
 void onTagRead(const String &tag) {
     Serial.println(tag);
+    RFID.begin(CLOCK_PIN, DATA_PIN);
 }
 
 void setup() {
     Serial.begin(115200);
-    rfid.setCallback(onTagRead);
+    RFID.attach(onTagRead);
 }
 
 void loop() {
-    rfid.read();
+    RFID.loop();
 }
 ```
 
@@ -40,21 +39,33 @@ MLX90109 requires two pin on the MCU side configured as digital inputs: one for 
 
 `RFID_UID_LEN` is the binary length of a tag (5 bytes).
 
-### Construction
+### Construction and initialization
 
 ```c++
-RFID (
+RFIDClass myRFID (
     uint8_t clockPin,
     uint8_t dataPin
 );
-```
 
 ### Functions
 
 ```c++
-int read();
+void begin();
+```
+
+```c++
+void begin(const uint8_t clockPin, const uint8_t dataPin);
+```
+Must be called in setup() function.
+
+```c++
+void loop();
 ```
 Must be called in loop() function.
+
+```c++
+RFIDStatus status();
+```
 
 Returns:
 * a value < 0 if an error has occurred. It could be one of the following:
@@ -66,7 +77,7 @@ Returns:
 * a value > 0 if a tag is read
 
 ```c++
-void setCallback(void (*callback)(const String &tag));
+void attach(void (*callback)(const String &tag));
 ```
 Set a callback function called when a tag is read. The `tag` parameter contains the UID in HEX format.
 

@@ -11,18 +11,18 @@
  * 
  * This file is part of mrRFID.
  * 
- * RFID is free software: you can redistribute it and/or modify
+ * mrRFID is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * RFID is distributed in the hope that it will be useful,
+ * mrRFID is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with RFID. If not, see <http://www.gnu.org/licenses/>.
+ * along with mrRFID. If not, see <http://www.gnu.org/licenses/>.
  * 
  ************************************************************************************/
 
@@ -35,25 +35,38 @@
 #define GPIO_PIN_SET			HIGH
 #define GPIO_PIN_RESET			LOW
 
-RFID::RFID(
-	const uint8_t clockPin,
-	const uint8_t dataPin) :
+RFIDClass::RFIDClass() {
+	
+}
+
+RFIDClass::RFIDClass(const uint8_t clockPin, const uint8_t dataPin) :
 	m_clockPin(clockPin),
 	m_dataPin(dataPin)
 {
+	
+}
+
+RFIDClass::~RFIDClass() {
+	
+}
+
+void RFIDClass::begin() {
 	pinMode(m_clockPin, INPUT_PULLUP);
 	pinMode(m_dataPin, INPUT_PULLUP);
 }
 
-RFID::~RFID() {
-
+void RFIDClass::begin(const uint8_t clockPin, const uint8_t dataPin) {
+	m_clockPin = clockPin;
+	m_dataPin = dataPin;
+	pinMode(m_clockPin, INPUT_PULLUP);
+	pinMode(m_dataPin, INPUT_PULLUP);
 }
 
-void RFID::setCallback(void (*callback)(const String &tag)) {
-	m_callback = callback;
+void RFIDClass::loop() {
+	m_status = read();
 }
 
-bool RFID::wait() {
+bool RFIDClass::wait() {
 	uint32_t start = millis();
 	while (digitalRead(m_clockPin) != GPIO_PIN_RESET) {
 		if ((millis() - start) > RFID_MLX_TIMEOUT) {
@@ -63,17 +76,17 @@ bool RFID::wait() {
 	return true;
 }
 
-int RFID::read() {
+RFIDStatus RFIDClass::read() {
 	uint8_t data[RFID_MLX_DATA_BUFSIZE], nibbles[RFID_UID_LEN * 2];
 
-	// verifico se la trasmissione è attiva
-	// se il clock non è basso esco subito
+	// check if MLX is reading a tag
+	// if CLOCK line is not LOW the exit
 	if (digitalRead(m_clockPin) != GPIO_PIN_RESET) {
-		return RFID_NO_UID;							// trasmissione non attiva
+		return RFID_NO_UID;							// not active transmission
 	}
 
-	// mi sincronizzo con il clock e leggo la linea data
-	// carico i valori letti in un buffer temporaneo sufficientemente grande
+	// syncing with CLOCK signal and reading DATA signal
+	// save values in a temprary buffer.
 	memset(data, 0, sizeof(data));
 	uint32_t start = millis();
 	size_t i = 0;
@@ -88,11 +101,12 @@ int RFID::read() {
 	}
 
 	// se non ho abbastanza dati esco subito
+	// check how many data collected. If not enough then exit
 	if (i < RFID_MLX_DATA_MINSIZE) {
 		return RFID_MLX_ERR_TIMEOUT;
 	}
 
-	// ricerco l'header del paccchetto dati appena letto
+	// scan buffer and search for header (9 consecutive bits with 1)
 	i = 0;
 	uint8_t count = 9;
 	while (i < sizeof(data) && count > 0) {
@@ -103,35 +117,35 @@ int RFID::read() {
 		}
 	}
 
-	// se non ho trovato l'header esco subito
+	// if not header found then exit
 	if (count) {
 		return RFID_NO_UID;
 	}
 
-	// analizzo i dati che seguono l'header e controllo la parità
+	// analizing data after header and calculate crc
 	count = 5;
 	uint8_t read = 0;
 	int parity = 0, j = 10;
 	memset(nibbles, 0, sizeof(nibbles));
 	while (i < sizeof(data)) {
-		// acquisisco nibble più bit parità
-		// se leggo 0 non modifico bit
-		// se leggo 1 metto bit a 1
+		// get nibble + parity bit
+		// if 0 no bit
+		// if 1 set bit 1
 		if (data[i++] == GPIO_PIN_SET) {
-			read |= 0x10;							// metto bit #4 a 1
-			parity++;								// incremento controllo parità
+			read |= 0x10;							// set bit #4 to 1
+			parity++;								// inc parity check
 		}
-		if (--count == 0) {							// se 0 ho acquisito 5 bit
-			if (j == 0) {							// ho acquisito nibble parità verticale e stop bit
+		if (--count == 0) {							// if 0 got 5 bits
+			if (j == 0) {							// got complete nibble, now check vertical parity and stop bit
 				if (read & 0x10) {
-					return RFID_MLX_ERR_BITSTOP;	// stop bit errato
+					return RFID_MLX_ERR_BITSTOP;	// stop bit error
 				}
 				read &= 0x0F;
 				for (j = 0; j < 10; j++) {
 					read = read ^ nibbles[j];
 				}
 				if (read) {
-					return RFID_MLX_ERR_VPARITY;	// controllo parità verticale fallito
+					return RFID_MLX_ERR_VPARITY;	// vertical parity check failed
 				}
 				j = 0;
 				memset(m_uid, 0, sizeof(m_uid));
@@ -148,30 +162,26 @@ int RFID::read() {
 				}
 				return RFID_UID_OK;					// got UID
 			}
-			// verifico parità pari orizzontale nibble codice ricevuto
+			// check horizontal bit
 			if (parity & 0x01) {
-				return RFID_MLX_ERR_HPARITY;		// numero di uno letti dispari ricezione errata
+				return RFID_MLX_ERR_HPARITY;		// 1 bit counter is odd, check failed
 			}
-			// salvo nibble acquisito senza bit parità
+			// save nibble into final buffer without parity bit
 			nibbles[--j] = read & 0x0F;
-			// mi preparo per il prossimo nibble codice
+			// preparing for the next nibble
 			count = 5;
 			read = 0;
 			parity = 0;
 		} else {
-			read >>= 1;		// shift a dx
+			read >>= 1;		// dx shifting
 		}
 	}
 
-	// ho scorso tutto il pacchetto senza trovare dati validi
+	// no valid data found in temporary buffer, exiting
 	return RFID_NO_UID;
 }
 
-void RFID::uid(uint8_t *dst, const size_t len) {
-	memcpy(dst, m_uid, len < sizeof(m_uid) ? len : sizeof(m_uid));
-}
-
-void RFID::tag(char *dst, const size_t len) {
+void RFIDClass::tag(char *dst, const size_t len) {
 	uint8_t i = 0, j = 0;
 	while (i < sizeof(m_uid) && j < len) {
 		dst[j++] = "0123456789ABCDEF"[m_uid[i] & 0x0F];
@@ -181,6 +191,6 @@ void RFID::tag(char *dst, const size_t len) {
 	dst[j] = '\0';
 }
 
-uint8_t RFID::uid8(const uint8_t i) {
-	return (i < RFID_UID_LEN) ? m_uid[i] : 0;
-}
+#ifndef RFID_CUSTOM
+RFIDClass RFID;
+#endif
