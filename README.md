@@ -4,7 +4,7 @@ Arduino library with support for Melexis MLX90109 RFID tag reader ICs.
 
 This library supports 125 Khz RFID tag readers based on Melexis MLX90109 ICs.
 
-![alt text](extras/EVB90109_V3_arduino.jpg "EVB90109_V3 with Arduino board")
+![alt text](extras/EVB90109_V3_arduino1.jpg "EVB90109_V3 with Arduino board")
 
 ## Example
 
@@ -34,6 +34,12 @@ See "RFID_Callback.ino" for the complete example.
 ## Documentation
 
 MLX90109 requires two pin on the MCU side configured as digital inputs: one for CLOCK signal and the other one for DATA signal. All the required initializations are done by the library.
+
+Most of the tag reader IC pins can’t be left floating and they have to be pulled up/down. On the EVB90109_V3 evaluation board pin 3 (SPEED) and pin 7 (MODE)) are connected to 10 (VDD), while pin 6 (MODUR2) is connected to VSS. Pins for Fast Decay and MODUR3 can be left floating since I don’t use fast decay nor on/off modulation in  my setup, and regarding MODUR3 components for this aren’t soldered on the evaluation board by default.
+
+![alt text](extras/EVB90109_V3_arduino2.jpg "EVB90109_V3 evaluation board (front side)")
+
+![alt text](extras/EVB90109_V3_arduino3.jpg "EVB90109_V3 evaluation board (back side)")
 
 ### Definitions
 
