@@ -46,6 +46,7 @@ RFIDClass myRFID (
     uint8_t clockPin,
     uint8_t dataPin
 );
+```
 
 ### Functions
 
